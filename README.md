@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Love of Candlestick
 
-## Getting Started
+## Présentation
 
-First, run the development server:
+Site e-commerce dédié à la présentation et à la vente de créations artisanales réalisées à la main.
+
+Ce projet est actuellement en développement. Il a pour objectif de proposer une vitrine professionnelle permettant
+de découvrir les créations, consulter les catalogues produits et faciliter la prise de contact ou les commandes.
+
+## Objectifs du projet
+
+- Développer un site moderne avec Next.js.
+- Mettre en place une architecture évolutive.
+- Concevoir une interface responsive.
+- Valoriser les créations artisanales.
+- Préparer l'intégration de fonctionnalités e-commerce.
+
+## Technologies utilisées
+
+- Next.js
+- React
+- TypeScript
+- CSS / Tailwind CSS
+- MongoDB
+- Git & GitHub
+
+## Fonctionnalités prévues
+
+- Présentation des collections
+- Galerie de produits
+- Fiches détaillées
+- Formulaire de contact
+- Responsive Design
+- Optimisation SEO
+
+## Installation
 
 ```bash
+git clone https://github.com/taodev974/love-of-candlestick.git
+cd love-of-candlestick
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Statut
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🚧 Projet en cours de développement.
+Ce projet constitue actuellement mon principal projet personnel. Il me permet d'approfondir mes compétences 
+en React, Next.js, TypeScript et Tailwind CSS tout en répondant à un besoin réel de valorisation d'une activité artisanale.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Auteur
 
-## Learn More
+Auteur
+Tony DEV (taodev974)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+GitHub : https://github.com/taodev974
