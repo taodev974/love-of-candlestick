@@ -11,6 +11,10 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [products, setProducts] = useState<any[]>([]);
 
+  // États pour le Drag & Drop / Upload d'image
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -53,6 +57,54 @@ export default function AdminPage() {
     }
   };
 
+  // Fonction pour gérer l'envoi du fichier image vers /api/upload
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Veuillez sélectionner uniquement une image (JPG, PNG, WEBP).");
+      return;
+    }
+
+    setUploadingImage(true);
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Met à jour le champ image avec le chemin web propre renvoyé par l'API
+        setFormData((prev) => ({ ...prev, images: data.url }));
+      } else {
+        alert(data.error || "Erreur lors de l'envoi de l'image.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur réseau lors de l'envoi de l'image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Gestionnaires du Drag & Drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileUpload(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,9 +119,7 @@ export default function AdminPage() {
           ...formData,
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock, 10),
-          images: formData.images
-            ? formData.images.split(",").map((img) => img.trim())
-            : [],
+          images: formData.images ? [formData.images] : [],
         }),
       });
 
@@ -256,18 +306,66 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Zone Drag & Drop pour l'image */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1E1B18]">
-            URL de l&apos;image
+            Photo de la création (Glissez-déposez ou sélectionnez un fichier)
           </label>
-          <input
-            type="text"
-            name="images"
-            value={formData.images}
-            onChange={handleChange}
-            placeholder="/images/oiseaux-fetes.jpg"
-            className="w-full px-4 py-3 rounded-xl border border-[#D6CEC2] focus:outline-none focus:border-[#B47B38] text-sm bg-[#FAF8F5]/50 text-[#1E1B18]"
-          />
+
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+              isDragging
+                ? "border-[#B47B38] bg-[#B47B38]/10"
+                : "border-[#D6CEC2] bg-[#FAF8F5] hover:border-[#B47B38]"
+            }`}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+
+            {uploadingImage ? (
+              <p className="text-sm text-[#B47B38] font-medium">
+                Envoi et traitement de la photo en cours...
+              </p>
+            ) : formData.images ? (
+              <div className="space-y-3">
+                <img
+                  src={formData.images}
+                  alt="Aperçu de la création"
+                  className="mx-auto h-36 w-36 object-cover rounded-lg shadow-sm border border-[#E6DFD7]"
+                />
+                <p className="text-xs text-[#6E665F]">
+                  Fichier enregistré :{" "}
+                  <span className="font-mono">{formData.images}</span>
+                </p>
+                <p className="text-xs text-[#B47B38] underline">
+                  Glissez ou cliquez pour remplacer l&apos;image
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 py-2">
+                <p className="text-sm font-medium text-[#1E1B18]">
+                  Glissez-déposez votre photo ici
+                </p>
+                <p className="text-xs text-[#6E665F]">
+                  ou{" "}
+                  <span className="text-[#B47B38] underline">
+                    parcourez votre ordinateur
+                  </span>{" "}
+                  (JPG, PNG, WEBP)
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2">
@@ -291,7 +389,7 @@ export default function AdminPage() {
         <div className="pt-4">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="w-full bg-[#1E1B18] text-[#FAF8F5] py-4 rounded-xl font-medium hover:bg-[#B47B38] transition-colors shadow-sm disabled:opacity-50"
           >
             {loading ? "Enregistrement en cours..." : "Enregistrer la création"}
@@ -326,6 +424,7 @@ export default function AdminPage() {
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDelete(prod._id)}
                   className="px-3 py-1.5 bg-[#FDEDEC] text-[#C0392B] rounded-lg text-xs font-medium hover:bg-[#F5B7B1]/50 transition-colors"
                 >

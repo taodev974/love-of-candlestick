@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
+export async function GET() {
+  try {
+    await connectDB();
+    const products = await Product.find({})
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+    return NextResponse.json({ success: true, products }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 },
+    );
+  }
+}
 export async function POST(request: Request) {
   try {
     await connectDB();
@@ -61,23 +76,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 400 },
-    );
-  }
-}
-
-// Ajoute ceci tout en haut ou en bas de ton fichier app/api/products/route.ts
-export async function GET() {
-  try {
-    await connectDB();
-    const products = await Product.find({})
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
-    return NextResponse.json({ success: true, products }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
     );
   }
 }
