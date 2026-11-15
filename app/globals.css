@@ -5,20 +5,22 @@
   --font-serif: var(--font-serif), ui-serif, Georgia, serif;
 }
 
-:root {
-  background-color: #faf8f5;
-  color: #1e1b18;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
+    color-scheme: light;
     background-color: #faf8f5;
     color: #1e1b18;
   }
+
+  body {
+    background-color: #faf8f5;
+    color: #1e1b18;
+    min-height: 100vh;
+  }
 }
 
-body {
-  background-color: #faf8f5;
-  color: #1e1b18;
-  min-height: 100vh;
+header a:hover,
+header a:hover span {
+  color: #b47b38 !important;
+  border-color: #b47b38 !important;
 }
