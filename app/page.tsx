@@ -55,7 +55,7 @@ export default async function Home() {
               Les Pièces Phares
             </h2>
             <p className="text-sm text-[#6E665F] mt-1">
-              Nos créations du moment, façonnées avec soin dans l'atelier.
+              Nos créations du moment, façonnées avec soin dans l&aposatelier.
             </p>
           </div>
           <Link
@@ -80,8 +80,11 @@ export default async function Home() {
                 key={product._id.toString()}
                 className="group bg-white rounded-2xl overflow-hidden border border-[#E8E2D9] hover:shadow-md transition-all duration-300 flex flex-col"
               >
-                {/* Zone Image */}
-                <div className="aspect-square bg-[#F2EDE4] relative flex items-center justify-center text-[#A3998E] overflow-hidden">
+                {/* Zone Image cliquable */}
+                <Link
+                  href={`/boutique/${product._id.toString()}`}
+                  className="aspect-square bg-[#F2EDE4] relative flex items-center justify-center text-[#A3998E] overflow-hidden block"
+                >
                   {product.images && product.images.length > 0 ? (
                     <img
                       src={product.images[0]}
@@ -91,7 +94,7 @@ export default async function Home() {
                   ) : (
                     <span className="text-sm italic">Photo à venir</span>
                   )}
-                </div>
+                </Link>
 
                 {/* Infos Produit */}
                 <div className="p-6 flex flex-col flex-grow justify-between space-y-4">
@@ -99,9 +102,11 @@ export default async function Home() {
                     <span className="text-xs uppercase tracking-wider text-[#B47B38] font-medium">
                       {product.category}
                     </span>
-                    <h3 className="font-serif text-xl text-[#1E1B18] mt-1 group-hover:text-[#B47B38] transition-colors">
-                      {product.name}
-                    </h3>
+                    <Link href={`/boutique/${product._id.toString()}`}>
+                      <h3 className="font-serif text-xl text-[#1E1B18] mt-1 group-hover:text-[#B47B38] transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
                     <p className="text-sm text-[#6E665F] mt-2 line-clamp-2">
                       {product.description}
                     </p>

@@ -95,6 +95,12 @@ export default function RootLayout({
               </p>
             </div>
             <p>© 2026 Love of Candlestick. Tous droits réservés.</p>
+            <Link
+              href="/admin"
+              className="text-xs text-[#8C8275] hover:text-[#B47B38] transition-colors"
+            >
+              Espace Atelier
+            </Link>
           </div>
         </footer>
       </body>

@@ -11,11 +11,14 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [products, setProducts] = useState<any[]>([]);
 
+  // ID du produit en cours de modification (null = création d'un nouveau produit)
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   // États pour le Drag & Drop / Upload d'image
   const [isDragging, setIsDragging] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     name: "",
     description: "",
     price: "",
@@ -25,7 +28,9 @@ export default function AdminPage() {
     dimensions: "",
     materials: "",
     isFeatured: true,
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   const loadProducts = async () => {
     try {
@@ -57,7 +62,6 @@ export default function AdminPage() {
     }
   };
 
-  // Fonction pour gérer l'envoi du fichier image vers /api/upload
   const handleFileUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       alert("Veuillez sélectionner uniquement une image (JPG, PNG, WEBP).");
@@ -75,7 +79,6 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        // Met à jour le champ image avec le chemin web propre renvoyé par l'API
         setFormData((prev) => ({ ...prev, images: data.url }));
       } else {
         alert(data.error || "Erreur lors de l'envoi de l'image.");
@@ -88,7 +91,6 @@ export default function AdminPage() {
     }
   };
 
-  // Gestionnaires du Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -105,22 +107,80 @@ export default function AdminPage() {
     if (file) handleFileUpload(file);
   };
 
+  // Pré-remplit le formulaire pour modifier un produit existant
+  const handleEditClick = (prod: any) => {
+    setEditingId(prod._id);
+    setSuccessMessage("");
+    setErrorMessage("");
+    setFormData({
+      name: prod.name || "",
+      description: prod.description || "",
+      price: prod.price?.toString() || "",
+      category: prod.category || "bougeoir",
+      stock: prod.stock?.toString() || "1",
+      images: prod.images?.[0] || "",
+      dimensions: prod.dimensions || "",
+      materials: prod.materials || "",
+      isFeatured: Boolean(prod.isFeatured),
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Annule la modification et repasse en mode création
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData(initialFormState);
+    setErrorMessage("");
+  };
+
+  // Bascule rapide du statut "Produit phare" directement depuis la liste
+  const handleToggleFeatured = async (prod: any) => {
+    try {
+      const res = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: prod._id,
+          isFeatured: !prod.isFeatured,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMessage(
+          !prod.isFeatured
+            ? `✨ "${prod.name}" est maintenant mis en avant sur l'accueil.`
+            : `« ${prod.name} » a été retiré des pièces phares.`,
+        );
+        loadProducts();
+        router.refresh();
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccessMessage("");
     setErrorMessage("");
 
+    const payload = {
+      ...formData,
+      price: parseFloat(formData.price),
+      stock: parseInt(formData.stock, 10),
+      images: formData.images ? [formData.images] : [],
+    };
+
     try {
       const response = await fetch("/api/products", {
-        method: "POST",
+        method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock, 10),
-          images: formData.images ? [formData.images] : [],
-        }),
+        body: JSON.stringify(
+          editingId ? { id: editingId, ...payload } : payload,
+        ),
       });
 
       const data = await response.json();
@@ -129,18 +189,13 @@ export default function AdminPage() {
         throw new Error(data.message || "Une erreur est survenue");
       }
 
-      setSuccessMessage("✨ Création ajoutée avec succès !");
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        category: "bougeoir",
-        stock: "1",
-        images: "",
-        dimensions: "",
-        materials: "",
-        isFeatured: true,
-      });
+      setSuccessMessage(
+        editingId
+          ? "✨ Création mise à jour avec succès !"
+          : "✨ Création ajoutée avec succès !",
+      );
+      setEditingId(null);
+      setFormData(initialFormState);
       loadProducts();
       router.refresh();
     } catch (error: any) {
@@ -159,6 +214,10 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
+        if (editingId === id) {
+          setEditingId(null);
+          setFormData(initialFormState);
+        }
         setSuccessMessage("🗑️ Création supprimée avec succès.");
         loadProducts();
         router.refresh();
@@ -201,14 +260,27 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Formulaire d'ajout */}
+      {/* Formulaire d'ajout ou de modification */}
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-2xl border border-[#E8E2D9] space-y-6 shadow-sm"
       >
-        <h2 className="font-serif text-xl text-[#1E1B18] border-b border-[#FAF8F5] pb-3">
-          Ajouter une nouvelle pièce
-        </h2>
+        <div className="flex items-center justify-between border-b border-[#FAF8F5] pb-3">
+          <h2 className="font-serif text-xl text-[#1E1B18]">
+            {editingId
+              ? "Modifier la pièce sélectionnée"
+              : "Ajouter une nouvelle pièce"}
+          </h2>
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="text-xs font-medium text-[#6E665F] hover:text-[#1E1B18] underline"
+            >
+              Annuler la modification
+            </button>
+          )}
+        </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1E1B18]">
@@ -220,7 +292,7 @@ export default function AdminPage() {
             required
             value={formData.name}
             onChange={handleChange}
-            placeholder="Ex: Centre de table poétique Chant des Fêtes"
+            placeholder="Ex: L'Ange du Recueillement"
             className="w-full px-4 py-3 rounded-xl border border-[#D6CEC2] focus:outline-none focus:border-[#B47B38] text-sm bg-[#FAF8F5]/50 text-[#1E1B18]"
           />
         </div>
@@ -237,7 +309,7 @@ export default function AdminPage() {
               required
               value={formData.price}
               onChange={handleChange}
-              placeholder="45.00"
+              placeholder="38.00"
               className="w-full px-4 py-3 rounded-xl border border-[#D6CEC2] focus:outline-none focus:border-[#B47B38] text-sm bg-[#FAF8F5]/50 text-[#1E1B18]"
             />
           </div>
@@ -286,7 +358,7 @@ export default function AdminPage() {
               name="dimensions"
               value={formData.dimensions}
               onChange={handleChange}
-              placeholder="Ex: 35 cm x 12 cm"
+              placeholder="Ex: 30 cm x 12 cm"
               className="w-full px-4 py-3 rounded-xl border border-[#D6CEC2] focus:outline-none focus:border-[#B47B38] text-sm bg-[#FAF8F5]/50 text-[#1E1B18]"
             />
           </div>
@@ -300,7 +372,7 @@ export default function AdminPage() {
               name="materials"
               value={formData.materials}
               onChange={handleChange}
-              placeholder="Ex: Bois patiné, céramique"
+              placeholder="Ex: Résine sculptée, ardoise naturelle..."
               className="w-full px-4 py-3 rounded-xl border border-[#D6CEC2] focus:outline-none focus:border-[#B47B38] text-sm bg-[#FAF8F5]/50 text-[#1E1B18]"
             />
           </div>
@@ -386,14 +458,28 @@ export default function AdminPage() {
           </label>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 flex gap-3">
           <button
             type="submit"
             disabled={loading || uploadingImage}
-            className="w-full bg-[#1E1B18] text-[#FAF8F5] py-4 rounded-xl font-medium hover:bg-[#B47B38] transition-colors shadow-sm disabled:opacity-50"
+            className="flex-1 bg-[#1E1B18] text-[#FAF8F5] py-4 rounded-xl font-medium hover:bg-[#B47B38] transition-colors shadow-sm disabled:opacity-50"
           >
-            {loading ? "Enregistrement en cours..." : "Enregistrer la création"}
+            {loading
+              ? "Enregistrement en cours..."
+              : editingId
+                ? "Enregistrer les modifications"
+                : "Enregistrer la création"}
           </button>
+
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="px-6 py-4 rounded-xl border border-[#D6CEC2] text-[#6E665F] font-medium hover:text-[#1E1B18] transition-colors"
+            >
+              Annuler
+            </button>
+          )}
         </div>
       </form>
 
@@ -412,24 +498,49 @@ export default function AdminPage() {
             {products.map((prod) => (
               <div
                 key={prod._id}
-                className="flex items-center justify-between p-4 bg-[#FAF8F5] rounded-xl border border-[#E8E2D9]"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#FAF8F5] rounded-xl border border-[#E8E2D9]"
               >
                 <div>
                   <h3 className="font-serif font-medium text-[#1E1B18]">
                     {prod.name}
                   </h3>
                   <p className="text-xs text-[#6E665F] mt-0.5">
-                    {prod.category} — {prod.price} €{" "}
-                    {prod.isFeatured && "✨ Phare"}
+                    {prod.category} — {prod.price} €
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(prod._id)}
-                  className="px-3 py-1.5 bg-[#FDEDEC] text-[#C0392B] rounded-lg text-xs font-medium hover:bg-[#F5B7B1]/50 transition-colors"
-                >
-                  Supprimer
-                </button>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Bouton bascule rapide Produit Phare */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFeatured(prod)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      prod.isFeatured
+                        ? "bg-[#B47B38]/15 text-[#B47B38] border-[#B47B38]/40 hover:bg-[#B47B38]/25"
+                        : "bg-white text-[#6E665F] border-[#D6CEC2] hover:border-[#1E1B18] hover:text-[#1E1B18]"
+                    }`}
+                  >
+                    {prod.isFeatured ? "✨ Pièce Phare" : "☆ Mettre en phare"}
+                  </button>
+
+                  {/* Bouton Modifier */}
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick(prod)}
+                    className="px-3 py-1.5 bg-white border border-[#D6CEC2] text-[#1E1B18] rounded-lg text-xs font-medium hover:border-[#B47B38] transition-colors"
+                  >
+                    Modifier
+                  </button>
+
+                  {/* Bouton Supprimer */}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(prod._id)}
+                    className="px-3 py-1.5 bg-[#FDEDEC] text-[#C0392B] rounded-lg text-xs font-medium hover:bg-[#F5B7B1]/50 transition-colors"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -79,3 +79,42 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    await connectDB(); // Vérifie que ce nom correspond bien à ta fonction de connexion MongoDB dans ce fichier
+    const body = await request.json();
+    const { id, ...updateData } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "ID du produit manquant" },
+        { status: 400 },
+      );
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedProduct) {
+      return NextResponse.json(
+        { success: false, message: "Création introuvable" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true, product: updatedProduct });
+  } catch (error: any) {
+    console.error("Erreur PATCH /api/products:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Erreur lors de la mise à jour",
+      },
+      { status: 500 },
+    );
+  }
+}

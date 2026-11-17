@@ -96,7 +96,7 @@ export default function BoutiqueClient({
             >
               {/* Image de la création */}
               <Link
-                href={`/produit/${product.slug}`}
+                href={`/boutique/${product._id}`}
                 className="relative aspect-[4/5] bg-[#F3EFEA] overflow-hidden block"
               >
                 {product.images && product.images.length > 0 ? (
@@ -118,7 +118,7 @@ export default function BoutiqueClient({
                   <span className="text-[11px] uppercase tracking-widest text-[#B47B38] font-semibold">
                     {product.category.replace(/-/g, " ")}
                   </span>
-                  <Link href={`/produit/${product.slug}`}>
+                  <Link href={`/boutique/${product._id}`}>
                     <h2 className="font-serif text-xl text-[#1E1B18] group-hover:text-[#B47B38] transition-colors line-clamp-2">
                       {product.name}
                     </h2>
