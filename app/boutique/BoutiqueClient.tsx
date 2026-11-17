@@ -1,5 +1,6 @@
 "use client";
 
+import AddToCartButton from "@/components/AddToCartButton";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -132,12 +133,7 @@ export default function BoutiqueClient({
                   <span className="font-serif text-lg font-medium text-[#1E1B18]">
                     {product.price.toFixed(2)} €
                   </span>
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-full border border-[#D6CEC2] text-xs font-medium text-[#1E1B18] hover:bg-[#1E1B18] hover:text-[#FAF8F5] hover:border-[#1E1B18] transition-colors"
-                  >
-                    Ajouter au panier
-                  </button>
+                  <AddToCartButton product={product} variant="compact" />
                 </div>
               </div>
             </div>

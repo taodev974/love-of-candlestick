@@ -1,3 +1,4 @@
+import AddToCartButton from "@/components/AddToCartButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -76,9 +77,7 @@ async function ProductDetails({
           </div>
 
           <div className="pt-6 space-y-4">
-            <button className="w-full bg-[#1E1B18] text-[#FAF8F5] py-4 rounded-full font-medium hover:bg-[#B47B38] transition-colors shadow-sm text-center">
-              Ajouter au panier
-            </button>
+            <AddToCartButton product={serializedProduct} variant="full" />
             <p className="text-xs text-center text-[#8C8275]">
               Pièce façonnée à la main dans l&apos;atelier de Sabine. Stock
               limité.

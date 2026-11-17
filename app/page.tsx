@@ -2,16 +2,18 @@ import Link from "next/link";
 import { connection } from "next/server";
 import connectDB from "../lib/mongodb";
 import Product from "../models/Product";
+import FeaturedProducts from "@/components/FeaturedProducts";
 
 export const instant = false;
+
 // Fonction pour récupérer les produits phares depuis MongoDB
 async function getFeaturedProducts() {
-  await connection(); // Indique à Next.js 16 de charger les produits dynamiquement à chaque visite
+  await connection();
   try {
     await connectDB();
-    // On force TypeScript à accepter le résultat brut de la base de données
     const products = await Product.find({ isFeatured: true }).lean().exec();
-    return products;
+    // Convertit proprement les objets Mongoose en objets JSON simples
+    return JSON.parse(JSON.stringify(products));
   } catch (error) {
     console.error("Erreur lors du chargement des produits:", error);
     return [];
@@ -20,6 +22,7 @@ async function getFeaturedProducts() {
 
 export default async function Home() {
   const products = await getFeaturedProducts();
+
   return (
     <div className="space-y-20 pb-20">
       {/* Section Hero / En-tête de bienvenue */}
@@ -55,7 +58,7 @@ export default async function Home() {
               Les Pièces Phares
             </h2>
             <p className="text-sm text-[#6E665F] mt-1">
-              Nos créations du moment, façonnées avec soin dans l&aposatelier.
+              Nos créations du moment, façonnées avec soin dans l&apos;atelier.
             </p>
           </div>
           <Link
@@ -66,64 +69,8 @@ export default async function Home() {
           </Link>
         </div>
 
-        {/* Grille des produits */}
-        {products.length === 0 ? (
-          <div className="text-center py-16 bg-[#F9F6F0] rounded-2xl border border-[#E8E2D9]">
-            <p className="text-[#6E665F]">
-              Aucun produit n&apos;est encore affiché en page d&apos;accueil.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {products.map((product) => (
-              <div
-                key={product._id.toString()}
-                className="group bg-white rounded-2xl overflow-hidden border border-[#E8E2D9] hover:shadow-md transition-all duration-300 flex flex-col"
-              >
-                {/* Zone Image cliquable */}
-                <Link
-                  href={`/boutique/${product._id.toString()}`}
-                  className="aspect-square bg-[#F2EDE4] relative flex items-center justify-center text-[#A3998E] overflow-hidden block"
-                >
-                  {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <span className="text-sm italic">Photo à venir</span>
-                  )}
-                </Link>
-
-                {/* Infos Produit */}
-                <div className="p-6 flex flex-col flex-grow justify-between space-y-4">
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-[#B47B38] font-medium">
-                      {product.category}
-                    </span>
-                    <Link href={`/boutique/${product._id.toString()}`}>
-                      <h3 className="font-serif text-xl text-[#1E1B18] mt-1 group-hover:text-[#B47B38] transition-colors">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    <p className="text-sm text-[#6E665F] mt-2 line-clamp-2">
-                      {product.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-[#F2EDE4]">
-                    <span className="font-serif text-lg font-semibold text-[#1E1B18]">
-                      {product.price.toFixed(2)} €
-                    </span>
-                    <button className="px-4 py-2 bg-[#FAF8F5] border border-[#D6CEC2] text-xs font-medium rounded-full hover:bg-[#1E1B18] hover:text-white hover:border-[#1E1B18] transition-colors">
-                      Ajouter au panier
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Grille des produits interactive */}
+        <FeaturedProducts products={products} />
       </section>
     </div>
   );
